@@ -18,19 +18,16 @@ if (gradle.includes("keystore.properties")) {
   process.exit(0);
 }
 
-const header = `import java.util.Properties
-import java.io.FileInputStream
-
-val keystorePropertiesFile = rootProject.file("keystore.properties")
-val keystoreProperties = Properties()
+// Kotlin scripts require imports first and the plugins {} block before any
+// other statement, so the properties block goes right before `android {`
+// (fully-qualified names avoid adding imports of our own).
+const signingBlock = `val keystorePropertiesFile = rootProject.file("keystore.properties")
+val keystoreProperties = java.util.Properties()
 if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+    keystoreProperties.load(java.io.FileInputStream(keystorePropertiesFile))
 }
 
-`;
-gradle = header + gradle;
-
-const signingBlock = `android {
+android {
     signingConfigs {
         create("release") {
             keyAlias = keystoreProperties["keyAlias"] as String
