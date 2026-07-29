@@ -18,13 +18,20 @@ if (gradle.includes("keystore.properties")) {
   process.exit(0);
 }
 
-// Kotlin scripts require imports first and the plugins {} block before any
-// other statement, so the properties block goes right before `android {`
-// (fully-qualified names avoid adding imports of our own).
+// Kotlin script constraints: imports must lead the file, the plugins {}
+// block must precede all other statements, and top-level `java` resolves to
+// the Java plugin extension (not the package), so qualified names like
+// java.util.Properties don't work — real imports + unqualified names it is.
+for (const imp of ["import java.util.Properties", "import java.io.FileInputStream"]) {
+  if (!gradle.split("\n").some((l) => l.trim() === imp)) {
+    gradle = imp + "\n" + gradle;
+  }
+}
+
 const signingBlock = `val keystorePropertiesFile = rootProject.file("keystore.properties")
-val keystoreProperties = java.util.Properties()
+val keystoreProperties = Properties()
 if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(java.io.FileInputStream(keystorePropertiesFile))
+    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
 android {
