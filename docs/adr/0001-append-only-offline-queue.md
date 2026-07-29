@@ -1,0 +1,3 @@
+# Corrections are online-only; the offline queue is append-only
+
+Notch supports offline logging (Android + desktop) against a remote PocketBase on Fly.io. Instead of a local-first database with conflict resolution (RxDB, tombstones, last-write-wins), we chose the dumbest sync that works: offline devices may only *append* new Entries to a local queue, which is flushed as plain POSTs on reconnect. Editing or deleting an Entry requires being online. Since Entries are events (never mutated by aggregation, totals always derived) and the app is single-user, this makes sync conflict-free by construction — at the cost of not being able to correct a fat-fingered entry until back online, which we judged rare enough to accept.

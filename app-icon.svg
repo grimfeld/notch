@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Notch: tally marks carved on a dark rounded tile -->
+  <rect width="1024" height="1024" rx="224" fill="#1a1a19"/>
+  <g stroke="#fcfcfb" stroke-width="56" stroke-linecap="round">
+    <line x1="312" y1="320" x2="312" y2="704"/>
+    <line x1="446" y1="320" x2="446" y2="704"/>
+    <line x1="580" y1="320" x2="580" y2="704"/>
+    <line x1="714" y1="320" x2="714" y2="704"/>
+  </g>
+  <line x1="240" y1="672" x2="784" y2="352" stroke="#2a78d6" stroke-width="56" stroke-linecap="round"/>
+</svg>

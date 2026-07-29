@@ -1,0 +1,20 @@
+node_modules/
+dist/
+*.local
+
+# Tauri
+src-tauri/target/
+src-tauri/gen/schemas/
+
+# Android signing — never commit
+*.keystore
+*.jks
+keystore.properties
+
+# Local dev binaries
+backend/pocketbase.exe
+backend/pb_data/
+
+# Editors
+.vscode/
+.idea/
