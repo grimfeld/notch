@@ -46,10 +46,11 @@ jobs:
       - name: Install npm dependencies
         run: npm ci
 
+      - name: Set NDK_HOME
+        run: echo "NDK_HOME=$ANDROID_NDK_LATEST_HOME" >> "$GITHUB_ENV"
+
       - name: Initialize Android project
         run: npm run tauri -- android init
-        env:
-          NDK_HOME: ${{ env.ANDROID_NDK_LATEST_HOME }}
 
       - name: Generate icons
         run: npm run tauri -- icon app-icon.svg
@@ -66,8 +67,6 @@ jobs:
 
       - name: Build signed APK
         run: npm run tauri -- android build --apk --target aarch64
-        env:
-          NDK_HOME: ${{ env.ANDROID_NDK_LATEST_HOME }}
 
       - name: Collect APK
         run: |
