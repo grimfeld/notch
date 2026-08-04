@@ -45,18 +45,16 @@ export function useEntries(statId: string | undefined) {
   });
 }
 
-/** Entries since Jan 1 for every stat — feeds dashboard headlines + sparklines. */
-export function useYearEntries() {
+/**
+ * All entries for every stat — feeds dashboard headlines + sparklines.
+ * All-time because Collection distinct counts and Boolean streaks reach
+ * arbitrarily far back; personal-scale data keeps this cheap.
+ */
+export function useAllEntries() {
   return useQuery({
-    queryKey: ["entries", "year"],
-    queryFn: () => {
-      const pb = getPb();
-      const jan1 = new Date(new Date().getFullYear(), 0, 1).toISOString();
-      return pb.collection("entries").getFullList<Entry>({
-        filter: pb.filter("ts >= {:jan1}", { jan1 }),
-        sort: "-ts",
-      });
-    },
+    queryKey: ["entries", "all"],
+    queryFn: () =>
+      getPb().collection("entries").getFullList<Entry>({ sort: "-ts" }),
   });
 }
 
@@ -68,6 +66,8 @@ export function usePendingEntries(): QueuedEntry[] {
 export interface NewEntry {
   stat: string;
   value: number;
+  /** Collection only: name of the item collected. */
+  item?: string;
   ts: string;
 }
 

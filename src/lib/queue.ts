@@ -10,6 +10,8 @@ export interface QueuedEntry {
   localId: string;
   stat: string;
   value: number;
+  /** Collection only: name of the item collected. */
+  item?: string;
   ts: string;
 }
 
@@ -67,7 +69,7 @@ export async function flushQueue(): Promise<number> {
       const head = items[0];
       try {
         await pb.collection("entries").create(
-          { stat: head.stat, value: head.value, ts: head.ts },
+          { stat: head.stat, value: head.value, item: head.item ?? "", ts: head.ts },
           { requestKey: null },
         );
         pushed++;

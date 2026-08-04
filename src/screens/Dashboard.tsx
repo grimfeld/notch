@@ -3,12 +3,12 @@ import { Link } from "react-router";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StatCard } from "@/components/StatCard";
-import { useStats, useYearEntries } from "@/lib/hooks";
+import { useAllEntries, useStats } from "@/lib/hooks";
 import type { Entry } from "@/lib/types";
 
 export function Dashboard() {
   const stats = useStats();
-  const entries = useYearEntries();
+  const entries = useAllEntries();
 
   const byStat = useMemo(() => {
     const map = new Map<string, Entry[]>();

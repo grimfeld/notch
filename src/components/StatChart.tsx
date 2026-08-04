@@ -105,6 +105,73 @@ export function AdditiveChart({ data, color, unit, cumulative }: AdditiveChartPr
   );
 }
 
+interface CollectionChartProps {
+  /** Cumulative distinct-item count, one point per new item. */
+  data: ReadingPoint[];
+  color: string;
+}
+
+/** All-time cumulative step line — one step up per newly collected item. */
+export function CollectionChart({ data, color }: CollectionChartProps) {
+  const stroke = colorVar(color);
+  return (
+    <ResponsiveContainer width="100%" height={160}>
+      <LineChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+        <CartesianGrid {...GRID} />
+        <XAxis
+          dataKey="ts"
+          type="number"
+          scale="time"
+          domain={["dataMin", "dataMax"]}
+          tick={AXIS_TICK}
+          tickLine={false}
+          axisLine={{ stroke: "var(--chart-baseline)" }}
+          tickFormatter={(ts: number) =>
+            new Date(ts).toLocaleDateString(undefined, {
+              month: "short",
+              year: "2-digit",
+            })
+          }
+        />
+        <YAxis
+          tick={AXIS_TICK}
+          tickLine={false}
+          axisLine={false}
+          width={36}
+          allowDecimals={false}
+        />
+        <Tooltip
+          cursor={{ stroke: "var(--chart-baseline)", strokeWidth: 1 }}
+          content={(p) => (
+            <ChartTooltip
+              {...p}
+              color={stroke}
+              unit=""
+              heading={
+                typeof p.label === "number"
+                  ? new Date(p.label).toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })
+                  : undefined
+              }
+            />
+          )}
+        />
+        <Line
+          type="stepAfter"
+          dataKey="value"
+          stroke={stroke}
+          strokeWidth={2}
+          dot={{ r: 3, fill: stroke, strokeWidth: 0 }}
+          activeDot={{ r: 4, strokeWidth: 2, stroke: "var(--background)" }}
+        />
+      </LineChart>
+    </ResponsiveContainer>
+  );
+}
+
 interface MeasurementChartProps {
   data: ReadingPoint[];
   color: string;

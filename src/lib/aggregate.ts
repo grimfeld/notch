@@ -131,6 +131,124 @@ export function headline(
   return all.length > 0 ? all[0].value : null;
 }
 
+/** Merge server + queued entries for one stat into bare (ts, item) facts. */
+export function mergedFacts(
+  stat: Stat,
+  entries: Entry[],
+  pending: QueuedEntry[],
+): { ts: string; item?: string }[] {
+  return [
+    ...entries.map((e) => ({ ts: e.ts, item: e.item })),
+    ...pending.filter((q) => q.stat === stat.id).map((q) => ({ ts: q.ts, item: q.item })),
+  ];
+}
+
+// --- Boolean ---------------------------------------------------------------
+
+/** Distinct local days with ≥1 entry — duplicates collapse here (ADR-0002). */
+export function markedDays(facts: { ts: string }[]): Set<string> {
+  return new Set(facts.map((f) => dayKey(f.ts)));
+}
+
+/**
+ * Boolean headline: days marked in the period, with a fixed denominator for
+ * bounded windows (7 / 30) and none for growing ones (year, all).
+ */
+export function booleanHeadline(
+  days: Set<string>,
+  period: Period,
+  now = new Date(),
+): { count: number; denominator: number | null } {
+  const start = periodStart(period, now);
+  const count =
+    start === null
+      ? days.size
+      : [...days].filter((d) => d >= dayKey(start.toISOString())).length;
+  const denominator = period === "week" ? 7 : period === "month" ? 30 : null;
+  return { count, denominator };
+}
+
+function shiftDay(key: string, delta: number): string {
+  const [y, m, d] = key.split("-").map(Number);
+  const date = new Date(y, m - 1, d + delta);
+  return dayKey(date.toISOString());
+}
+
+/**
+ * Consecutive marked days ending today or yesterday — an unmarked today
+ * doesn't break the run (the day isn't over).
+ */
+export function currentStreak(days: Set<string>, now = new Date()): number {
+  const today = dayKey(now.toISOString());
+  let cursor = days.has(today) ? today : shiftDay(today, -1);
+  let run = 0;
+  while (days.has(cursor)) {
+    run++;
+    cursor = shiftDay(cursor, -1);
+  }
+  return run;
+}
+
+/** Best run of consecutive marked days ever. */
+export function longestStreak(days: Set<string>): number {
+  let best = 0;
+  for (const day of days) {
+    if (days.has(shiftDay(day, -1))) continue; // not a run start
+    let run = 1;
+    let cursor = shiftDay(day, 1);
+    while (days.has(cursor)) {
+      run++;
+      cursor = shiftDay(cursor, 1);
+    }
+    best = Math.max(best, run);
+  }
+  return best;
+}
+
+// --- Collection ------------------------------------------------------------
+
+/** Dedupe key for a Collection item name. */
+export function normalizeItem(name: string): string {
+  return name.trim().toLowerCase();
+}
+
+export interface CollectedItem {
+  /** First-logged spelling. */
+  name: string;
+  /** When it was first collected (ISO). */
+  firstTs: string;
+}
+
+/**
+ * Distinct collected items, deduped by normalized name (ADR-0002), keeping
+ * the first-logged spelling and timestamp. Chronological by first collection.
+ */
+export function collectedItems(
+  facts: { ts: string; item?: string }[],
+): CollectedItem[] {
+  const byKey = new Map<string, CollectedItem>();
+  const sorted = [...facts]
+    .filter((f) => f.item && f.item.trim() !== "")
+    .sort((a, b) => a.ts.localeCompare(b.ts));
+  for (const f of sorted) {
+    const key = normalizeItem(f.item!);
+    if (!byKey.has(key)) byKey.set(key, { name: f.item!.trim(), firstTs: f.ts });
+  }
+  return [...byKey.values()];
+}
+
+/** All-time cumulative distinct-item count, one step per new item. */
+export function collectionSeries(items: CollectedItem[]): ReadingPoint[] {
+  return items.map((it, i) => ({
+    ts: new Date(it.firstTs).getTime(),
+    label: new Date(it.firstTs).toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+    }),
+    value: i + 1,
+  }));
+}
+
 export function formatValue(n: number): string {
   return Number.isInteger(n)
     ? n.toLocaleString()

@@ -10,10 +10,14 @@ Domain vocabulary lives in [CONTEXT.md](./CONTEXT.md); architecture decisions in
 
 ## How it works
 
-Every stat is an event log. An **Entry** is `(value, timestamp)`; totals are always derived, never stored. Stats come in two kinds:
+Every stat is an event log. An **Entry** is `(value, timestamp)` (Collection entries also carry an item name); totals are always derived, never stored. Stats come in four kinds:
 
 - **Additive** — entries are increments, aggregates sum them (push-ups, books)
 - **Measurement** — entries are point-in-time readings (weight)
+- **Boolean** — entries mark a day as done; aggregates count distinct days and streaks (workouts)
+- **Collection** — entries name a distinct item; aggregates count distinct items (countries visited), optionally against a universe size ("5 / 195")
+
+Boolean and Collection stats never reject duplicates — aggregates dedupe at derivation (see [ADR-0002](./docs/adr/0002-dedupe-at-derivation.md)).
 
 Logging works offline: entries queue locally (append-only) and sync as plain creates on reconnect — no conflict resolution needed (see [ADR-0001](./docs/adr/0001-append-only-offline-queue.md)). Editing/deleting requires a connection.
 

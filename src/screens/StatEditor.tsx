@@ -25,6 +25,8 @@ import {
 const KIND_LABELS: Record<StatKind, { title: string; hint: string }> = {
   additive: { title: "Additive", hint: "Increments that add up — push-ups, books" },
   measurement: { title: "Measurement", hint: "Point-in-time readings — weight" },
+  boolean: { title: "Boolean", hint: "Did it happen today — workouts, habits" },
+  collection: { title: "Collection", hint: "Distinct things collected — countries" },
 };
 
 export function StatEditor() {
@@ -40,6 +42,7 @@ export function StatEditor() {
   const [unit, setUnit] = useState("");
   const [color, setColor] = useState<ColorSlot>("blue");
   const [increment, setIncrement] = useState("1");
+  const [universe, setUniverse] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
@@ -49,6 +52,7 @@ export function StatEditor() {
       setUnit(existing.data.unit);
       setColor(existing.data.color);
       setIncrement(`${existing.data.defaultIncrement || ""}`);
+      setUniverse(`${existing.data.universeSize || ""}`);
     }
   }, [existing.data]);
 
@@ -59,10 +63,11 @@ export function StatEditor() {
       data: {
         name: name.trim(),
         kind,
-        unit: unit.trim(),
+        unit: kind === "additive" || kind === "measurement" ? unit.trim() : "",
         color,
         defaultIncrement:
           kind === "additive" ? Number(increment) || 0 : 0,
+        universeSize: kind === "collection" ? Number(universe) || 0 : 0,
       },
     });
     navigate(isNew ? `/stat/${saved.id}` : `/stat/${id}`);
@@ -111,12 +116,14 @@ export function StatEditor() {
               <button
                 key={k}
                 type="button"
+                disabled={!isNew}
                 onClick={() => setKind(k)}
                 className={cn(
                   "rounded-lg border p-3 text-left transition-colors",
                   kind === k
                     ? "border-primary ring-2 ring-ring/50"
                     : "hover:bg-accent",
+                  !isNew && "opacity-50 hover:bg-transparent",
                 )}
               >
                 <div className="text-sm font-medium">{KIND_LABELS[k].title}</div>
@@ -126,17 +133,42 @@ export function StatEditor() {
               </button>
             ))}
           </div>
+          {!isNew ? (
+            <p className="text-xs text-muted-foreground">
+              Kind is fixed after creation — entries would mean something else.
+            </p>
+          ) : null}
         </div>
 
-        <div className="grid gap-2">
-          <Label htmlFor="stat-unit">Unit (optional)</Label>
-          <Input
-            id="stat-unit"
-            value={unit}
-            onChange={(e) => setUnit(e.target.value)}
-            placeholder={kind === "additive" ? "reps" : "kg"}
-          />
-        </div>
+        {kind === "additive" || kind === "measurement" ? (
+          <div className="grid gap-2">
+            <Label htmlFor="stat-unit">Unit (optional)</Label>
+            <Input
+              id="stat-unit"
+              value={unit}
+              onChange={(e) => setUnit(e.target.value)}
+              placeholder={kind === "additive" ? "reps" : "kg"}
+            />
+          </div>
+        ) : null}
+
+        {kind === "collection" ? (
+          <div className="grid gap-2">
+            <Label htmlFor="stat-universe">Out of (optional)</Label>
+            <Input
+              id="stat-universe"
+              type="number"
+              min="1"
+              inputMode="numeric"
+              value={universe}
+              onChange={(e) => setUniverse(e.target.value)}
+              placeholder="195"
+            />
+            <p className="text-xs text-muted-foreground">
+              How many exist in total — shown as “5 / 195”.
+            </p>
+          </div>
+        ) : null}
 
         <div className="grid gap-2">
           <Label>Color</Label>
